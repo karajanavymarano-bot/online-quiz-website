@@ -1,0 +1,2867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Tech Live | Interactive Quiz & QR Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+    /* Spectrum Palette from Red -> Violet -> Royal Blue */
+    --c-red: #f03e2f;
+    --c-coral: #e43b44;
+    --c-rose: #cb3b62;
+    --c-berry: #b03d79;
+    --c-magenta: #933f8c;
+    --c-violet: #76429e;
+    --c-indigo: #5944ad;
+    --c-cobalt: #3c46bc;
+    --c-sapphire: #2247cb;
+    --c-royal: #1449dc;
+
+    --spectrum-grad: linear-gradient(90deg,
+        #f03e2f 0%,
+        #e43b44 12%,
+        #cb3b62 24%,
+        #b03d79 36%,
+        #933f8c 48%,
+        #76429e 60%,
+        #5944ad 72%,
+        #3c46bc 84%,
+        #1449dc 100%
+    );
+
+    --surface: #ffffff;
+    --surface-soft: #faf7ff;
+    --bg-base: #f5f2fc;
+    --text: #221636;
+    --muted: #6c5e85;
+    --border: #e4dcf5;
+    --shadow: 0 14px 36px rgba(42, 22, 92, 0.11);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-base);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Top Spectrum Accent Strip */
+.spectrum-bar {
+    height: 6px;
+    width: 100%;
+    background: var(--spectrum-grad);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+.app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================================
+   TOP NAVBAR
+========================================= */
+.topbar {
+    height: 74px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5%;
+    position: sticky;
+    top: 6px;
+    z-index: 30;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--c-red), var(--c-violet), var(--c-royal));
+    color: white;
+    font-size: 20px;
+    box-shadow: 0 5px 14px rgba(89, 68, 173, 0.28);
+}
+
+.brand-name {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    background: var(--spectrum-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.brand-subtitle {
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 800;
+    letter-spacing: 1.2px;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pill-btn {
+    background: var(--surface-soft);
+    color: var(--text);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 13px;
+    font-size: 12px;
+    font-weight: 800;
+    transition: .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pill-btn:hover {
+    border-color: var(--c-violet);
+    transform: translateY(-1px);
+}
+
+.live-indicator {
+    background: linear-gradient(135deg, var(--c-red), var(--c-violet));
+    color: white;
+    border-radius: 30px;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 8px #ffffff;
+    animation: blinkLive 1.3s infinite;
+}
+
+@keyframes blinkLive {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .45; transform: scale(.8); }
+}
+
+/* =========================================
+   MAIN CONTAINER & TRANSITIONS
+========================================= */
+.main-layout {
+    max-width: 1120px;
+    width: 100%;
+    margin: 28px auto;
+    padding: 0 20px 50px;
+    flex: 1;
+}
+
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+    animation: popIn .3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes pulseStreak {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes floatPoints {
+    0% { opacity: 1; transform: translateY(0) scale(0.92); }
+    65% { opacity: 1; transform: translateY(-28px) scale(1.08); }
+    100% { opacity: 0; transform: translateY(-44px) scale(1); }
+}
+
+/* =========================================
+   BUTTONS
+========================================= */
+.btn-spec {
+    border-radius: 14px;
+    padding: 15px 24px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    transition: transform .14s ease, box-shadow .14s ease, filter .15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-spec-primary {
+    background: linear-gradient(135deg, var(--c-red), var(--c-violet), var(--c-royal));
+    color: white;
+    box-shadow: 0 6px 20px rgba(89, 68, 173, 0.32);
+}
+
+.btn-spec-primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+    transform: translateY(-2px);
+    box-shadow: 0 9px 24px rgba(89, 68, 173, 0.4);
+}
+
+.btn-spec-primary:active:not(:disabled) {
+    transform: translateY(2px);
+}
+
+.btn-spec-secondary {
+    background: white;
+    color: var(--text);
+    border: 2px solid var(--border);
+    box-shadow: 0 4px 0 var(--border);
+}
+
+.btn-spec-secondary:hover:not(:disabled) {
+    border-color: var(--c-indigo);
+    background: var(--surface-soft);
+    transform: translateY(-2px);
+}
+
+.btn-spec:disabled {
+    opacity: .45;
+    box-shadow: none;
+}
+
+/* =========================================
+   LIVE LOBBY & QR JOIN SCREEN
+========================================= */
+.lobby-grid {
+    display: grid;
+    grid-template-columns: 1.25fr 0.75fr;
+    gap: 22px;
+    margin-bottom: 22px;
+}
+
+.hero-card {
+    background: linear-gradient(135deg, #2b1348 0%, #4b1d70 48%, #182b7a 100%);
+    border-radius: 26px;
+    padding: 40px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 18px 42px rgba(34, 20, 74, 0.24);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.hero-orb {
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240, 62, 47, 0.35), transparent 70%);
+    top: -70px;
+    right: -60px;
+    pointer-events: none;
+}
+
+.hero-orb-2 {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(20, 73, 220, 0.4), transparent 70%);
+    bottom: -80px;
+    left: 25%;
+    pointer-events: none;
+}
+
+.hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-card h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 900;
+    line-height: 1.18;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-card p {
+    color: #ebe4ff;
+    font-size: 14.5px;
+    line-height: 1.72;
+    max-width: 520px;
+    margin-bottom: 26px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: relative;
+    z-index: 2;
+}
+
+/* LIVE QR JOIN CARD */
+.qr-card {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 26px;
+    padding: 26px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.qr-pin-box {
+    width: 100%;
+    background: var(--surface-soft);
+    border: 2px dashed var(--c-violet);
+    border-radius: 16px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.qr-pin-box span {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--muted);
+}
+
+.qr-pin-box strong {
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: var(--spectrum-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.qr-frame {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 22px rgba(89, 68, 173, 0.08);
+    display: grid;
+    place-items: center;
+    min-height: 176px;
+    min-width: 176px;
+}
+
+.qr-caption {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.qr-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 14px;
+}
+
+.player-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+.p-chip {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.stat-box {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.stat-box strong {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    font-size: 21px;
+    font-weight: 900;
+    color: var(--c-indigo);
+}
+
+.stat-box span {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: .7px;
+    margin-top: 4px;
+}
+
+/* =========================================
+   LIVE QUIZ ARENA SCREEN
+========================================= */
+.arena-hud {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+}
+
+.hud-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.hud-q-badge {
+    background: linear-gradient(135deg, var(--c-red), var(--c-violet));
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 12px;
+}
+
+.hud-topic-badge {
+    background: var(--surface-soft);
+    border: 1.5px solid var(--border);
+    color: var(--c-indigo);
+    font-weight: 800;
+    font-size: 12px;
+    padding: 7px 13px;
+    border-radius: 12px;
+}
+
+.hud-player-tag {
+    background: #eef2ff;
+    color: var(--c-royal);
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 6px 12px;
+    border-radius: 12px;
+}
+
+.hud-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.streak-pill {
+    background: #fff1f2;
+    color: var(--c-rose);
+    border: 2px solid #fecdd3;
+    padding: 6px 13px;
+    border-radius: 30px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.streak-pill.hot {
+    background: linear-gradient(135deg, var(--c-red), var(--c-berry));
+    color: white;
+    border-color: transparent;
+    animation: pulseStreak .7s ease;
+}
+
+.pts-pill {
+    background: linear-gradient(135deg, var(--c-indigo), var(--c-royal));
+    color: white;
+    padding: 7px 16px;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.points-popup {
+    position: absolute;
+    right: 0;
+    top: -12px;
+    background: linear-gradient(135deg, var(--c-violet), var(--c-royal));
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-size: 13px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    pointer-events: none;
+    animation: floatPoints 1.1s forwards;
+}
+
+/* LIVE MINI LEADERBOARD STRIP */
+.live-board-strip {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 10px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+}
+
+.live-board-title {
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: .6px;
+    font-size: 11px;
+}
+
+.live-board-ranks {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.rank-item {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.rank-item.you {
+    background: linear-gradient(135deg, rgba(240, 62, 47, 0.12), rgba(20, 73, 220, 0.14));
+    border-color: var(--c-indigo);
+    color: var(--c-royal);
+    font-weight: 800;
+}
+
+/* TIMER BAR */
+.timer-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.timer-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--c-violet), var(--c-royal));
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(60, 70, 188, 0.3);
+}
+
+.timer-circle.urgent {
+    background: var(--c-red);
+    animation: pulseStreak .5s infinite;
+}
+
+.timer-track {
+    flex: 1;
+    height: 12px;
+    background: #e3dcf7;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.timer-fill {
+    height: 100%;
+    width: 100%;
+    background: var(--spectrum-grad);
+    border-radius: 20px;
+    transition: width 0.25s linear;
+}
+
+/* QUESTION STAGE */
+.question-stage {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    padding: 34px 28px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.question-stage h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(20px, 3.2vw, 27px);
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.4;
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+/* 2x2 SPECTRUM TILES WITH STAR, MOON, SPARKLE, CROWN */
+.spectrum-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.s-tile {
+    min-height: 86px;
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: white;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+    transition: transform .13s ease, filter .15s ease, opacity .25s ease;
+}
+
+.s-tile:hover:not(:disabled) {
+    transform: translateY(-3px);
+    filter: brightness(1.06);
+}
+
+.s-tile:active:not(:disabled) {
+    transform: translateY(2px);
+}
+
+/* 4 Distinct Shades Along the Provided Palette */
+.s-tile-0 {
+    background: linear-gradient(135deg, #f03e2f, #e43b44);
+    box-shadow: 0 6px 0 #9f1d14;
+}
+.s-tile-1 {
+    background: linear-gradient(135deg, #b03d79, #933f8c);
+    box-shadow: 0 6px 0 #681c4a;
+}
+.s-tile-2 {
+    background: linear-gradient(135deg, #76429e, #5944ad);
+    box-shadow: 0 6px 0 #392778;
+}
+.s-tile-3 {
+    background: linear-gradient(135deg, #2247cb, #1449dc);
+    box-shadow: 0 6px 0 #0b2684;
+}
+
+.s-shape {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 21px;
+    flex-shrink: 0;
+}
+
+.s-text {
+    flex: 1;
+}
+
+.s-key {
+    font-size: 11px;
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.22);
+    padding: 4px 8px;
+    border-radius: 7px;
+}
+
+.s-tile.dimmed {
+    opacity: 0.32;
+    transform: scale(0.98);
+    box-shadow: none;
+}
+
+.s-tile.is-correct {
+    opacity: 1 !important;
+    transform: scale(1.015);
+    outline: 3.5px solid #ffffff;
+    box-shadow: 0 8px 24px rgba(20, 73, 220, 0.35);
+}
+
+.s-tile.is-wrong {
+    opacity: 0.72 !important;
+    outline: 3px solid rgba(255, 255, 255, 0.65);
+}
+
+.s-status-icon {
+    font-size: 22px;
+    font-weight: 900;
+}
+
+/* FEEDBACK BANNER */
+.arena-feedback {
+    display: none;
+    border-radius: 18px;
+    padding: 20px 24px;
+    margin-bottom: 18px;
+    color: white;
+    animation: popIn .25s ease;
+}
+
+.arena-feedback.show {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.arena-feedback.good {
+    background: linear-gradient(135deg, var(--c-indigo), var(--c-royal));
+    box-shadow: 0 8px 24px rgba(20, 73, 220, 0.25);
+}
+
+.arena-feedback.bad {
+    background: linear-gradient(135deg, var(--c-red), var(--c-berry));
+    box-shadow: 0 8px 24px rgba(240, 62, 47, 0.25);
+}
+
+.arena-feedback h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+.arena-feedback p {
+    font-size: 13.5px;
+    opacity: 0.95;
+    line-height: 1.55;
+    max-width: 720px;
+}
+
+.arena-nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.progress-dots {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.p-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #d8cff0;
+    transition: .2s;
+}
+
+.p-dot.active {
+    background: var(--c-violet);
+    transform: scale(1.3);
+}
+
+.p-dot.right {
+    background: var(--c-royal);
+}
+
+.p-dot.wrong {
+    background: var(--c-red);
+}
+
+/* =========================================
+   RESULTS & PODIUM SCREEN
+========================================= */
+.podium-banner {
+    background: linear-gradient(135deg, #2b1348 0%, #68287c 50%, #1449dc 100%);
+    color: white;
+    border-radius: 26px;
+    padding: 38px 28px;
+    text-align: center;
+    box-shadow: 0 18px 42px rgba(34, 20, 74, 0.25);
+    margin-bottom: 22px;
+}
+
+.trophy-badge {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    color: white;
+    font-size: 40px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 16px;
+}
+
+.podium-banner h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 900;
+    margin-bottom: 6px;
+}
+
+.podium-banner p {
+    color: #ebe4ff;
+    font-size: 14px;
+    max-width: 540px;
+    margin: 0 auto 22px;
+}
+
+.podium-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+.p-metric {
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    padding: 16px 10px;
+}
+
+.p-metric strong {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.p-metric span {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    color: #e4dcff;
+}
+
+.result-card {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 22px;
+    padding: 26px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.result-card h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.result-card .sub {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 18px;
+}
+
+.topic-bars {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.t-bar-box {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    padding: 14px;
+    border-radius: 14px;
+}
+
+.t-bar-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.t-bar-track {
+    height: 8px;
+    background: #e4dcf5;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.t-bar-fill {
+    height: 100%;
+    background: var(--spectrum-grad);
+    border-radius: 10px;
+}
+
+.missed-item {
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    background: var(--surface-soft);
+}
+
+.missed-tag {
+    display: inline-block;
+    background: #efe8ff;
+    color: var(--c-violet);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+}
+
+.missed-q {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.missed-ans {
+    font-size: 12.5px;
+    line-height: 1.6;
+}
+
+.missed-ans.bad { color: var(--c-red); font-weight: 700; }
+.missed-ans.good { color: var(--c-royal); font-weight: 700; }
+
+.results-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.results-actions button {
+    flex: 1;
+    min-width: 220px;
+}
+
+/* =========================================
+   FULLSCREEN INTERACTIVE STUDY SESSION
+========================================= */
+#studyScreen.active {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: linear-gradient(145deg, #241042 0%, #4d1f73 50%, #122878 100%);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    color: white;
+}
+
+.fs-topbar {
+    height: 72px;
+    background: rgba(20, 10, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 0 4%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.fs-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.fs-btn-glass {
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 11px;
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    transition: .15s;
+}
+
+.fs-btn-glass:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.fs-btn-glass:disabled {
+    opacity: .4;
+}
+
+.fs-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.fs-sub {
+    font-size: 11px;
+    color: #e2d8ff;
+    font-weight: 600;
+}
+
+.fs-center {
+    flex: 1;
+    max-width: 340px;
+}
+
+.fs-prog-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 800;
+    color: #efe8ff;
+    margin-bottom: 6px;
+}
+
+.fs-prog-track {
+    height: 9px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.fs-prog-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--spectrum-grad);
+    border-radius: 20px;
+    transition: width .35s ease;
+}
+
+.fs-stage {
+    flex: 1;
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 26px 20px 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.fs-dots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.fs-dot {
+    width: 30px;
+    height: 8px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.25);
+    transition: all .25s ease;
+}
+
+.fs-dot.active {
+    width: 48px;
+    background: #ffffff;
+}
+
+.fs-dot.mastered {
+    background: #60a5fa;
+}
+
+.study-deck-card {
+    background: white;
+    color: var(--text);
+    border-radius: 26px;
+    padding: 34px;
+    box-shadow: 0 24px 55px rgba(10, 4, 30, 0.45);
+    margin-bottom: 20px;
+}
+
+.deck-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.deck-topic-pill {
+    background: #efe8ff;
+    color: var(--c-violet);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 13px;
+    border-radius: 30px;
+}
+
+.deck-status-pill {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 13px;
+    border-radius: 30px;
+    background: #ffe4e6;
+    color: var(--c-red);
+}
+
+.deck-status-pill.done {
+    background: #e0e7ff;
+    color: var(--c-royal);
+}
+
+.deck-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(21px, 3vw, 27px);
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: 14px;
+}
+
+.deck-missed-prompt {
+    background: var(--surface-soft);
+    border: 2px dashed var(--c-indigo);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+}
+
+.deck-missed-prompt span {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--c-violet);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.deck-missed-prompt p {
+    font-weight: 700;
+    font-size: 14.5px;
+    line-height: 1.5;
+}
+
+.flip-trigger-box {
+    background: linear-gradient(135deg, #fff1f2, #f3e8ff, #eef2ff);
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .15s ease;
+}
+
+.flip-trigger-box:hover {
+    transform: translateY(-2px);
+    border-color: var(--c-violet);
+}
+
+.flip-trigger-box strong {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.flip-trigger-box span {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.deck-revealed {
+    display: none;
+    animation: popIn .28s ease;
+}
+
+.deck-revealed.show {
+    display: block;
+}
+
+.deck-explanation {
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: #463a5e;
+    margin-bottom: 16px;
+}
+
+.deck-answer-callout {
+    background: #eef2ff;
+    border-left: 5px solid var(--c-royal);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+}
+
+.deck-answer-callout span {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--c-indigo);
+    letter-spacing: .7px;
+    margin-bottom: 3px;
+}
+
+.deck-answer-callout strong {
+    font-size: 14.5px;
+    color: var(--c-royal);
+}
+
+.mini-practice-box {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+}
+
+.mini-practice-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: .7px;
+    margin-bottom: 11px;
+}
+
+.mini-choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 10px;
+}
+
+.mini-choice-btn {
+    background: white;
+    border: 2px solid var(--border);
+    box-shadow: 0 3px 0 var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    transition: .15s;
+}
+
+.mini-choice-btn:hover:not(:disabled) {
+    border-color: var(--c-violet);
+    transform: translateY(-1px);
+}
+
+.mini-choice-btn.correct {
+    background: linear-gradient(135deg, var(--c-indigo), var(--c-royal));
+    border-color: var(--c-royal);
+    box-shadow: 0 3px 0 #0b2684;
+    color: white;
+}
+
+.mini-choice-btn.wrong {
+    background: linear-gradient(135deg, var(--c-red), var(--c-berry));
+    border-color: var(--c-red);
+    box-shadow: 0 3px 0 #9f1d14;
+    color: white;
+}
+
+.fs-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.fs-mastery-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #efe8ff;
+}
+
+/* =========================================
+   JOIN LIVE MODAL (SCAN QR / ENTER NAME)
+========================================= */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(24, 12, 48, 0.58);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 150;
+}
+
+.modal-backdrop.open {
+    display: flex;
+    animation: popIn .22s ease;
+}
+
+.modal-card {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    max-width: 420px;
+    width: 100%;
+    padding: 28px;
+    box-shadow: 0 24px 60px rgba(24, 12, 48, 0.35);
+}
+
+.modal-card h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+.modal-card p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 18px;
+    line-height: 1.5;
+}
+
+.modal-input {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 14px;
+    outline: none;
+}
+
+.modal-input:focus {
+    border-color: var(--c-violet);
+}
+
+#confettiCanvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+}
+
+.footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 18px;
+}
+
+@media (max-width: 860px) {
+    .lobby-grid {
+        grid-template-columns: 1fr;
+    }
+    .stats-strip, .podium-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .spectrum-grid {
+        grid-template-columns: 1fr;
+    }
+    .fs-center {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .live-indicator, .s-key {
+        display: none;
+    }
+    .hero-card, .study-deck-card {
+        padding: 24px 18px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="spectrum-bar"></div>
+<canvas id="confettiCanvas"></canvas>
+
+<!-- JOIN LIVE PLAYER MODAL -->
+<div class="modal-backdrop" id="joinModal">
+    <div class="modal-card">
+        <h3>✦ Join Live Quiz Session</h3>
+        <p>Enter your nickname for Room <strong id="modalPinText">CT-2026</strong> and jump straight into the live 20-item round.</p>
+        <input type="text" class="modal-input" id="playerNameInput" maxlength="18" placeholder="Enter your nickname (e.g. Alex)">
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button class="btn-spec btn-spec-secondary" style="padding:11px 16px;" onclick="closeJoinModal()">Cancel</button>
+            <button class="btn-spec btn-spec-primary" style="padding:11px 20px;" onclick="confirmJoinAndStart()">Join & Play →</button>
+        </div>
+    </div>
+</div>
+
+<div class="app">
+    <!-- TOP HEADER -->
+    <header class="topbar">
+        <div class="brand" onclick="goHome()">
+            <div class="brand-icon">✦</div>
+            <div>
+                <div class="brand-name">Creative Tech Live</div>
+                <div class="brand-subtitle">LIVE QUIZ · QR ARENA · STUDY DECK</div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button class="pill-btn" onclick="openJoinModal()">👤 <span id="headerPlayerName">Player 1</span></button>
+            <button class="pill-btn" id="soundToggleBtn" onclick="toggleSound()">🔊 SFX</button>
+            <div class="live-indicator"><span class="live-dot"></span> LIVE QUIZ</div>
+        </div>
+    </header>
+
+    <main class="main-layout">
+        <!-- =====================================
+             1. LIVE LOBBY & QR SCREEN
+        ===================================== -->
+        <section id="welcomeScreen" class="screen active">
+            <div class="lobby-grid">
+                <div class="hero-card">
+                    <div class="hero-orb"></div>
+                    <div class="hero-orb-2"></div>
+                    <div>
+                        <div class="hero-tag"><span class="live-dot"></span> LIVE CLASSROOM CHALLENGE · 20 ITEMS</div>
+                        <h1>Live Creative Tech Quiz Arena</h1>
+                        <p>
+                            Launch a live 20-question session covering HTML, CSV, JavaScript,
+                            Soldering, and Webpage Design. Scan the live QR code to join on another
+                            device, compete on the live leaderboard, and unlock a fullscreen study
+                            session for any missed items.
+                        </p>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn-spec btn-spec-primary" onclick="startQuiz()">
+                            ✦ START LIVE QUIZ NOW
+                        </button>
+                        <button class="btn-spec btn-spec-secondary" onclick="openJoinModal()">
+                            + SET PLAYER NICKNAME
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LIVE QR JOIN CARD -->
+                <div class="qr-card">
+                    <div class="qr-pin-box">
+                        <span>LIVE ROOM CODE</span>
+                        <strong id="roomPinDisplay">CT-2026</strong>
+                    </div>
+                    <div class="qr-frame" id="liveQrBox" title="Scan to open Creative Tech Live Quiz"></div>
+                    <div class="qr-caption">Scan Live QR to Join Quiz</div>
+                    <div class="qr-sub" id="qrUrlLabel">Direct Session Link Active</div>
+                    <div class="player-chips" id="lobbyPlayerChips"></div>
+                </div>
+            </div>
+
+            <div class="stats-strip">
+                <div class="stat-box">
+                    <strong>20</strong>
+                    <span>LIVE QUESTIONS</span>
+                </div>
+                <div class="stat-box">
+                    <strong>5</strong>
+                    <span>TECH TOPICS</span>
+                </div>
+                <div class="stat-box">
+                    <strong>QR + LIVE</strong>
+                    <span>INSTANT ACCESS</span>
+                </div>
+                <div class="stat-box">
+                    <strong>⛶ FULL</strong>
+                    <span>INTERACTIVE STUDY</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================
+             2. LIVE QUIZ ARENA SCREEN
+        ===================================== -->
+        <section id="quizScreen" class="screen">
+            <div class="arena-hud">
+                <div class="hud-group">
+                    <span class="hud-q-badge" id="hudQNumber">1 / 20</span>
+                    <span class="hud-topic-badge" id="hudTopic">HTML</span>
+                    <span class="hud-player-tag" id="hudPlayerBadge">👤 Player 1</span>
+                </div>
+
+                <div class="hud-stats" id="hudStatsArea">
+                    <div class="streak-pill" id="streakBadge">✦ 0 Streak</div>
+                    <div class="pts-pill">★ <span id="livePoints">0</span> pts</div>
+                </div>
+            </div>
+
+            <!-- LIVE LEADERBOARD BAR -->
+            <div class="live-board-strip">
+                <span class="live-board-title">LIVE STANDINGS</span>
+                <div class="live-board-ranks" id="liveLeaderboard"></div>
+            </div>
+
+            <div class="timer-wrapper">
+                <div class="timer-circle" id="timerCircle">20</div>
+                <div class="timer-track">
+                    <div class="timer-fill" id="timerFill"></div>
+                </div>
+            </div>
+
+            <div class="question-stage">
+                <h2 id="questionText">Loading question...</h2>
+            </div>
+
+            <div class="spectrum-grid" id="choicesContainer"></div>
+
+            <div class="arena-feedback" id="feedbackBox">
+                <div>
+                    <h3 id="feedbackTitle">Correct!</h3>
+                    <p id="feedbackText"></p>
+                </div>
+                <button class="btn-spec btn-spec-secondary" id="bannerNextBtn" onclick="nextQuestion()">
+                    NEXT →
+                </button>
+            </div>
+
+            <div class="arena-nav-row">
+                <button class="btn-spec btn-spec-secondary" id="previousBtn" onclick="previousQuestion()">
+                    ← PREV
+                </button>
+                <div class="progress-dots" id="progressDots"></div>
+                <button class="btn-spec btn-spec-primary" id="nextBtn" onclick="nextQuestion()" disabled>
+                    NEXT →
+                </button>
+            </div>
+        </section>
+
+        <!-- =====================================
+             3. RESULTS & PODIUM SCREEN
+        ===================================== -->
+        <section id="resultsScreen" class="screen">
+            <div class="podium-banner">
+                <div class="trophy-badge" id="podiumIcon">♛</div>
+                <h1 id="resultTitle">Live Round Complete!</h1>
+                <p id="resultMessage"></p>
+
+                <div class="podium-metrics">
+                    <div class="p-metric">
+                        <strong id="finalPoints">0</strong>
+                        <span>TOTAL POINTS</span>
+                    </div>
+                    <div class="p-metric">
+                        <strong id="finalScore">0/20</strong>
+                        <span>CORRECT</span>
+                    </div>
+                    <div class="p-metric">
+                        <strong id="percentage">0%</strong>
+                        <span>ACCURACY</span>
+                    </div>
+                    <div class="p-metric">
+                        <strong id="bestStreakStat">0✦</strong>
+                        <span>BEST STREAK</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-card">
+                <h2>Module Mastery Breakdown</h2>
+                <p class="sub">Accuracy across each of the 5 Creative Technology topics</p>
+                <div class="topic-bars" id="topicBreakdown"></div>
+            </div>
+
+            <div class="result-card">
+                <h2>Missed Questions Review</h2>
+                <p class="sub">Check what you missed before opening Fullscreen Study Mode</p>
+                <div id="reviewContainer"></div>
+            </div>
+
+            <div class="results-actions">
+                <button class="btn-spec btn-spec-primary" id="studyButton" onclick="openStudyGuide()">
+                    ⛶ LAUNCH FULLSCREEN STUDY SESSION
+                </button>
+                <button class="btn-spec btn-spec-secondary" onclick="retakeQuiz()">
+                    ↻ PLAY AGAIN
+                </button>
+            </div>
+        </section>
+
+        <!-- =====================================
+             4. FULLSCREEN INTERACTIVE STUDY SESSION
+        ===================================== -->
+        <section id="studyScreen" class="screen">
+            <div class="fs-topbar">
+                <div class="fs-left">
+                    <button class="fs-btn-glass" onclick="exitStudySession()">✕ Exit</button>
+                    <div>
+                        <div class="fs-title">Interactive Study Session</div>
+                        <div class="fs-sub" id="fsLessonCounter">Card 1 of 1</div>
+                    </div>
+                </div>
+
+                <div class="fs-center">
+                    <div class="fs-prog-labels">
+                        <span>SESSION MASTERY</span>
+                        <span id="studyProgressPercent">0%</span>
+                    </div>
+                    <div class="fs-prog-track">
+                        <div class="fs-prog-fill" id="studyProgressBar"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <button class="fs-btn-glass" id="fullscreenToggleBtn" onclick="toggleBrowserFullscreen()">
+                        ⛶ Fullscreen
+                    </button>
+                </div>
+            </div>
+
+            <div class="fs-stage">
+                <div class="fs-dots" id="fsDotsContainer"></div>
+                <div id="fsCardHost"></div>
+                <div class="fs-footer" id="fsFooterNav">
+                    <button class="fs-btn-glass" id="fsPrevBtn" onclick="prevStudyCard()">
+                        ← PREVIOUS
+                    </button>
+                    <span class="fs-mastery-count" id="studyProgressText">0 of 0 mastered</span>
+                    <button class="btn-spec btn-spec-primary" style="padding:12px 22px; font-size:13px;" id="fsNextBtn" onclick="nextStudyCard()">
+                        NEXT CARD →
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        CREATIVE TECH LIVE · 20-QUESTION INTERACTIVE QUIZ & QR ARENA
+    </footer>
+</div>
+
+<script>
+/* =========================================
+   20-QUESTION BANK (4 PER TOPIC)
+========================================= */
+const questions = [
+    /* HTML (01-04) */
+    {
+        topic: "HTML",
+        question: "What does HTML stand for?",
+        choices: [
+            "HyperText Markup Language",
+            "High Transfer Machine Language",
+            "Hyperlink Text Management Language",
+            "Home Tool Markup Language"
+        ],
+        answer: 0,
+        explanation: "HTML stands for HyperText Markup Language—the standard markup language used to structure content on webpages.",
+        lessonTitle: "Meaning & Purpose of HTML",
+        deepDive: "HTML stands for HyperText Markup Language. Think of it as the structural skeleton of every webpage—it tells the browser what each element is (headings, paragraphs, links, and images)."
+    },
+    {
+        topic: "HTML",
+        question: "Which HTML tag creates the largest and highest-level heading?",
+        choices: ["<heading>", "<h6>", "<h1>", "<head>"],
+        answer: 2,
+        explanation: "The <h1> tag creates the top-level main heading. HTML headings range from <h1> (largest) down to <h6> (smallest).",
+        lessonTitle: "HTML Heading Hierarchy",
+        deepDive: "HTML includes six heading tags from <h1> to <h6>. Use <h1> for the main page title and <h2>–<h6> for nested subheadings so readers and search engines understand page structure."
+    },
+    {
+        topic: "HTML",
+        question: "Which attribute specifies the destination URL of a hyperlink?",
+        choices: ["src", "href", "alt", "link"],
+        answer: 1,
+        explanation: "The href (Hypertext Reference) attribute defines the target URL that an <a> anchor link navigates to.",
+        lessonTitle: "Hyperlinks & the href Attribute",
+        deepDive: "Inside an anchor tag such as <a href='https://example.com'>Visit</a>, the href attribute points to the destination webpage, file, or section."
+    },
+    {
+        topic: "HTML",
+        question: "Which tag is used to embed and display an image on a webpage?",
+        choices: ["<picture>", "<image>", "<img>", "<src>"],
+        answer: 2,
+        explanation: "The <img> tag embeds an image on a webpage, using its src attribute to specify the image file path.",
+        lessonTitle: "Embedding Images with <img>",
+        deepDive: "The self-closing <img> element displays images on a webpage. It uses src='...' to locate the image file and alt='...' to describe the image for accessibility."
+    },
+
+    /* CSV (05-08) */
+    {
+        topic: "CSV",
+        question: "What does CSV stand for?",
+        choices: [
+            "Computer Saved Values",
+            "Comma-Separated Values",
+            "Column System Version",
+            "Character Storage Variable"
+        ],
+        answer: 1,
+        explanation: "CSV stands for Comma-Separated Values—a plain-text file format that stores tabular data separated by commas.",
+        lessonTitle: "What is a CSV File?",
+        deepDive: "CSV stands for Comma-Separated Values. Because it stores rows and columns in lightweight plain text, spreadsheets, databases, and scripts can all open it effortlessly."
+    },
+    {
+        topic: "CSV",
+        question: "What is the main purpose of a CSV file?",
+        choices: [
+            "To render 3D animations",
+            "To store and exchange tabular data",
+            "To design CSS layouts",
+            "To compress video streams"
+        ],
+        answer: 1,
+        explanation: "CSV files store and transfer structured table data (rows and columns) across different apps and platforms.",
+        lessonTitle: "Storing & Exchanging Tabular Data",
+        deepDive: "CSV files act as a universal exchange format for tables—making it easy to export grades, sensor readings, or contact lists from one program into another."
+    },
+    {
+        topic: "CSV",
+        question: "In a standard CSV file, what character separates one value from another?",
+        choices: ["A comma (,)", "A slash (/)", "A colon (:)", "An asterisk (*)"],
+        answer: 0,
+        explanation: "A comma (,) is the standard delimiter separating individual field values in each row of a CSV file.",
+        lessonTitle: "Delimiters in CSV Files",
+        deepDive: "A delimiter marks the boundary between data fields. Standard CSV files use commas to separate values on each row (e.g., Student,Score,Section)."
+    },
+    {
+        topic: "CSV",
+        question: "What does each horizontal row in a typical CSV file represent?",
+        choices: [
+            "A separate HTML webpage",
+            "A single record of data",
+            "A styling stylesheet",
+            "An embedded image"
+        ],
+        answer: 1,
+        explanation: "Each horizontal row represents one complete record (such as one person or item), while vertical columns represent fields.",
+        lessonTitle: "Rows (Records) vs. Columns (Fields)",
+        deepDive: "In a CSV table, columns define categories (Name, Age, Grade), while every horizontal row represents one complete data record."
+    },
+
+    /* JAVASCRIPT (09-12) */
+    {
+        topic: "JavaScript",
+        question: "What is the primary purpose of JavaScript in web development?",
+        choices: [
+            "To add interactivity and dynamic behavior",
+            "To replace the computer's operating system",
+            "To define static page structure only",
+            "To manufacture circuit boards"
+        ],
+        answer: 0,
+        explanation: "JavaScript adds interactivity and logic to webpages—responding to user clicks, updating content, and running calculations.",
+        lessonTitle: "Role of JavaScript in Web Pages",
+        deepDive: "HTML builds structure and CSS styles the look, while JavaScript adds interactivity—letting webpages respond to clicks, timers, user input, and live data."
+    },
+    {
+        topic: "JavaScript",
+        question: "Which keyword declares a modern variable whose value can be reassigned?",
+        choices: ["const", "let", "fixed", "static"],
+        answer: 1,
+        explanation: "The let keyword declares a block-scoped variable that can be updated later, while const creates a constant binding.",
+        lessonTitle: "Declaring Variables with let & const",
+        deepDive: "Use let when a value needs to change (such as a score or timer). Use const when a variable should keep its assigned value."
+    },
+    {
+        topic: "JavaScript",
+        question: "What will this code output? console.log(5 + 3);",
+        choices: ["53", "8", "5 + 3", "SyntaxError"],
+        answer: 1,
+        explanation: "Since both 5 and 3 are numbers, + performs arithmetic addition and outputs 8 to the console.",
+        lessonTitle: "Numeric Addition in JavaScript",
+        deepDive: "Between two numeric values, + performs math addition (5 + 3 = 8). If one value were a string like '5' + 3, JavaScript would join them into '53'."
+    },
+    {
+        topic: "JavaScript",
+        question: "What is the main purpose of a function in JavaScript?",
+        choices: [
+            "To group reusable instructions into a callable block",
+            "To permanently delete HTML files",
+            "To store image pixels",
+            "To adjust monitor contrast"
+        ],
+        answer: 0,
+        explanation: "A function bundles reusable instructions under a name so you can run that task whenever needed without repeating code.",
+        lessonTitle: "Reusable Functions in JavaScript",
+        deepDive: "Functions organize code into clean, reusable blocks. Write the logic once inside a function and call it whenever an event or calculation needs it."
+    },
+
+    /* SOLDERING (13-16) */
+    {
+        topic: "Soldering",
+        question: "What is the main purpose of soldering in electronics?",
+        choices: [
+            "To join electronic components electrically and mechanically",
+            "To clean computer monitors",
+            "To saw fiberglass boards",
+            "To measure circuit voltage"
+        ],
+        answer: 0,
+        explanation: "Soldering melts a metal alloy to bond component leads to conductive pads, creating a reliable electrical and mechanical connection.",
+        lessonTitle: "Purpose of Soldering",
+        deepDive: "Soldering joins electronic parts to copper pads on a PCB, forming a strong physical bond and a low-resistance pathway for electricity."
+    },
+    {
+        topic: "Soldering",
+        question: "What is the role of flux during soldering?",
+        choices: [
+            "To remove oxides and improve melted solder flow",
+            "To cool down the soldering iron tip",
+            "To coat wires in rubber insulation",
+            "To block electrical current"
+        ],
+        answer: 0,
+        explanation: "Flux cleans metal surfaces by removing oxidation when heated, allowing molten solder to flow smoothly and bond tightly.",
+        lessonTitle: "Why Flux Matters",
+        deepDive: "Oxidation prevents solder from sticking to metal leads. Flux removes oxides during heating so molten solder wets both surfaces cleanly."
+    },
+    {
+        topic: "Soldering",
+        question: "What causes a 'cold solder joint'?",
+        choices: [
+            "Insufficient heat or movement while the solder cools",
+            "Using proper exhaust ventilation",
+            "Wiping the tip on a damp sponge",
+            "Using rosin-core solder wire"
+        ],
+        answer: 0,
+        explanation: "A cold solder joint forms when the connection isn't heated enough or shifts while solidifying, causing a dull, weak joint.",
+        lessonTitle: "Preventing Cold Solder Joints",
+        deepDive: "Healthy joints look smooth and shiny. If the iron isn't hot enough or a component moves while cooling, a dull, brittle 'cold joint' forms and breaks contact."
+    },
+    {
+        topic: "Soldering",
+        question: "Which practice is essential for safe soldering?",
+        choices: [
+            "Using proper ventilation and resting the iron in a stand",
+            "Laying the hot iron directly on a wooden desk",
+            "Touching the metal tip to test temperature",
+            "Soldering beside flammable aerosols"
+        ],
+        answer: 0,
+        explanation: "Always work in a ventilated area, wear safety glasses, and place the hot soldering iron in a weighted stand.",
+        lessonTitle: "Soldering Workshop Safety",
+        deepDive: "Soldering irons exceed 350°C. Keep the iron in a heat-safe stand when not in hand, use fume extraction or ventilation, and wear eye protection."
+    },
+
+    /* WEBPAGE DESIGN (17-20) */
+    {
+        topic: "Webpage Design",
+        question: "Which language is primarily responsible for the visual styling of a webpage?",
+        choices: ["HTML", "CSS", "CSV", "SQL"],
+        answer: 1,
+        explanation: "CSS (Cascading Style Sheets) controls colors, fonts, spacing, borders, and responsive page layouts.",
+        lessonTitle: "Styling Webpages with CSS",
+        deepDive: "CSS stands for Cascading Style Sheets. It handles all visual presentation—colors, typography, shadows, grids, and animations."
+    },
+    {
+        topic: "Webpage Design",
+        question: "What does responsive web design mean?",
+        choices: [
+            "A layout that adapts smoothly to different screen sizes",
+            "A site that only opens on desktop computers",
+            "A webpage without any visual styling",
+            "A site that disables mobile touchscreens"
+        ],
+        answer: 0,
+        explanation: "Responsive web design ensures a website adjusts cleanly across smartphones, tablets, laptops, and wide monitors.",
+        lessonTitle: "Responsive Web Design",
+        deepDive: "Responsive design uses flexible layouts and CSS media queries so text, grids, and buttons resize naturally on any device."
+    },
+    {
+        topic: "Webpage Design",
+        question: "Which design principle guides the user's eye to the most important elements first?",
+        choices: [
+            "Visual hierarchy",
+            "File compression",
+            "Data encryption",
+            "Packet switching"
+        ],
+        answer: 0,
+        explanation: "Visual hierarchy uses size, contrast, color, and spacing to highlight key headlines and actions first.",
+        lessonTitle: "Visual Hierarchy",
+        deepDive: "Visual hierarchy arranges elements by importance—using bold titles, contrasting buttons, and whitespace to guide users effortlessly."
+    },
+    {
+        topic: "Webpage Design",
+        question: "Which practice best improves webpage accessibility?",
+        choices: [
+            "Providing descriptive alt text for meaningful images",
+            "Using faint gray text on a white background",
+            "Making buttons tiny with no labels",
+            "Disabling keyboard navigation"
+        ],
+        answer: 0,
+        explanation: "Alt text lets screen readers describe images to visually impaired visitors and displays fallback text if an image fails to load.",
+        lessonTitle: "Web Accessibility & Alt Text",
+        deepDive: "Accessible design ensures everyone can use your website—by adding alt text to images, keeping strong color contrast, and supporting keyboard controls."
+    }
+];
+
+/* =========================================
+   LIVE QR & SESSION SETUP
+========================================= */
+const ROOM_PIN = "CT-2026";
+let playerNickname = "Player 1";
+const rivalBots = [
+    { name: "Nova", pace: 680 },
+    { name: "Orion", pace: 540 },
+    { name: "Lyra", pace: 410 }
+];
+
+function getLiveJoinUrl() {
+    const base = window.location.href.split("?")[0];
+    return `${base}?liveRoom=${encodeURIComponent(ROOM_PIN)}`;
+}
+
+function renderLiveQR() {
+    const box = document.getElementById("liveQrBox");
+    const joinUrl = getLiveJoinUrl();
+    document.getElementById("qrUrlLabel").textContent =
+        window.location.protocol === "file:"
+            ? "Scan or share session link once hosted"
+            : joinUrl;
+
+    box.innerHTML = "";
+    if (typeof QRCode !== "undefined") {
+        new QRCode(box, {
+            text: joinUrl,
+            width: 148,
+            height: 148,
+            colorDark: "#2b1348",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    } else {
+        box.innerHTML = `<div style="font-size:12px; font-weight:700; color:#5944ad;">ROOM: ${ROOM_PIN}</div>`;
+    }
+}
+
+function renderLobbyPlayers() {
+    const host = document.getElementById("lobbyPlayerChips");
+    const allNames = [playerNickname, ...rivalBots.map(b => b.name)];
+    host.innerHTML = allNames
+        .map((n, i) => `<span class="p-chip">${i === 0 ? "★ " : "• "}${n}</span>`)
+        .join("");
+}
+
+function openJoinModal() {
+    sfxClick();
+    document.getElementById("modalPinText").textContent = ROOM_PIN;
+    document.getElementById("playerNameInput").value = playerNickname === "Player 1" ? "" : playerNickname;
+    document.getElementById("joinModal").classList.add("open");
+    setTimeout(() => document.getElementById("playerNameInput").focus(), 60);
+}
+
+function closeJoinModal() {
+    document.getElementById("joinModal").classList.remove("open");
+}
+
+function confirmJoinAndStart() {
+    const val = document.getElementById("playerNameInput").value.trim();
+    if (val) {
+        playerNickname = val;
+    }
+    document.getElementById("headerPlayerName").textContent = playerNickname;
+    document.getElementById("hudPlayerBadge").textContent = `👤 ${playerNickname}`;
+    renderLobbyPlayers();
+    closeJoinModal();
+    startQuiz();
+}
+
+/* =========================================
+   SOUND EFFECTS ENGINE (WEB AUDIO API)
+========================================= */
+let soundEnabled = true;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTone(freq, type, duration, delay = 0, gainVal = 0.14) {
+    if (!soundEnabled) return;
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+    gain.gain.setValueAtTime(gainVal, audioCtx.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + delay);
+    osc.stop(audioCtx.currentTime + delay + duration);
+}
+
+function sfxCorrect() {
+    playTone(523.25, "triangle", 0.14, 0);
+    playTone(659.25, "triangle", 0.14, 0.09);
+    playTone(783.99, "triangle", 0.26, 0.18);
+}
+
+function sfxWrong() {
+    playTone(220, "sawtooth", 0.18, 0, 0.10);
+    playTone(175, "sawtooth", 0.28, 0.14, 0.10);
+}
+
+function sfxClick() {
+    playTone(440, "sine", 0.06, 0, 0.07);
+}
+
+function sfxFanfare() {
+    [523.25, 659.25, 783.99, 1046.5].forEach((note, i) => {
+        playTone(note, "triangle", 0.24, i * 0.11, 0.15);
+    });
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById("soundToggleBtn").textContent = soundEnabled ? "🔊 SFX" : "🔇 OFF";
+}
+
+/* =========================================
+   QUIZ & LIVE LEADERBOARD STATE
+========================================= */
+let currentQuestion = 0;
+let userAnswers = new Array(questions.length).fill(null);
+let answered = new Array(questions.length).fill(false);
+
+let totalPoints = 0;
+let streak = 0;
+let bestStreak = 0;
+let botScores = {};
+
+const QUESTION_TIME = 20;
+let timeLeft = QUESTION_TIME;
+let timerInterval = null;
+
+// Study Session State
+let missedList = [];
+let currentStudyIdx = 0;
+let masteredLessons = new Set();
+let unlockedCards = new Set();
+let miniQuizAnswered = new Set();
+
+const topicNames = ["HTML", "CSV", "JavaScript", "Soldering", "Webpage Design"];
+const shapes = ["★", "☾", "✦", "♛"];
+
+/* =========================================
+   SCREEN NAVIGATION
+========================================= */
+function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function goHome() {
+    stopTimer();
+    showScreen("welcomeScreen");
+}
+
+function initLiveLeaderboard() {
+    botScores = {};
+    rivalBots.forEach(b => { botScores[b.name] = 0; });
+    updateLiveLeaderboard();
+}
+
+function advanceBotsForQuestion(qIndex) {
+    rivalBots.forEach((b, idx) => {
+        const hitChance = ((qIndex + idx) % 4 !== 0);
+        if (hitChance) {
+            botScores[b.name] += b.pace + ((qIndex * 37) % 180);
+        }
+    });
+    updateLiveLeaderboard();
+}
+
+function updateLiveLeaderboard() {
+    const entries = [
+        { name: playerNickname, pts: totalPoints, isYou: true },
+        ...rivalBots.map(b => ({ name: b.name, pts: botScores[b.name] || 0, isYou: false }))
+    ].sort((a, b) => b.pts - a.pts);
+
+    const host = document.getElementById("liveLeaderboard");
+    host.innerHTML = entries
+        .map((e, idx) => `
+            <span class="rank-item ${e.isYou ? "you" : ""}">
+                #${idx + 1} ${e.name}: ${e.pts.toLocaleString()}
+            </span>
+        `)
+        .join("");
+}
+
+/* =========================================
+   QUIZ FLOW & TIMER
+========================================= */
+function startQuiz() {
+    sfxClick();
+    currentQuestion = 0;
+    userAnswers = new Array(questions.length).fill(null);
+    answered = new Array(questions.length).fill(false);
+    totalPoints = 0;
+    streak = 0;
+    bestStreak = 0;
+    masteredLessons = new Set();
+    unlockedCards = new Set();
+    miniQuizAnswered = new Set();
+
+    document.getElementById("hudPlayerBadge").textContent = `👤 ${playerNickname}`;
+    initLiveLeaderboard();
+    updateHudStats();
+    showScreen("quizScreen");
+    displayQuestion();
+}
+
+function startTimer() {
+    stopTimer();
+    timeLeft = QUESTION_TIME;
+    updateTimerUI();
+
+    timerInterval = setInterval(() => {
+        timeLeft -= 0.25;
+        if (timeLeft <= 0) {
+            timeLeft = 0;
+            updateTimerUI();
+            stopTimer();
+            handleTimeUp();
+        } else {
+            updateTimerUI();
+        }
+    }, 250);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function updateTimerUI() {
+    const circle = document.getElementById("timerCircle");
+    const fill = document.getElementById("timerFill");
+    const ceilSec = Math.ceil(timeLeft);
+    circle.textContent = ceilSec;
+    fill.style.width = `${(timeLeft / QUESTION_TIME) * 100}%`;
+
+    if (ceilSec <= 5) {
+        circle.classList.add("urgent");
+    } else {
+        circle.classList.remove("urgent");
+    }
+}
+
+function handleTimeUp() {
+    if (answered[currentQuestion]) return;
+    answered[currentQuestion] = true;
+    userAnswers[currentQuestion] = -1;
+    streak = 0;
+    advanceBotsForQuestion(currentQuestion);
+    updateHudStats();
+    sfxWrong();
+
+    const q = questions[currentQuestion];
+    const tiles = document.querySelectorAll(".s-tile");
+    tiles.forEach((tile, i) => {
+        tile.disabled = true;
+        if (i === q.answer) {
+            tile.classList.add("is-correct");
+            tile.querySelector(".s-status-icon").textContent = "✓";
+        } else {
+            tile.classList.add("dimmed");
+        }
+    });
+
+    const fb = document.getElementById("feedbackBox");
+    fb.className = "arena-feedback show bad";
+    document.getElementById("feedbackTitle").textContent = "⏰ Time's Up!";
+    document.getElementById("feedbackText").textContent = q.explanation;
+
+    document.getElementById("nextBtn").disabled = false;
+    renderProgressDots();
+}
+
+function updateHudStats() {
+    document.getElementById("livePoints").textContent = totalPoints.toLocaleString();
+    const sb = document.getElementById("streakBadge");
+    sb.textContent = `✦ ${streak} Streak`;
+    if (streak >= 2) {
+        sb.classList.add("hot");
+    } else {
+        sb.classList.remove("hot");
+    }
+}
+
+function spawnPointsPopup(pts) {
+    const hud = document.getElementById("hudStatsArea");
+    const pop = document.createElement("div");
+    pop.className = "points-popup";
+    pop.textContent = `+${pts} PTS!`;
+    hud.appendChild(pop);
+    setTimeout(() => pop.remove(), 1100);
+}
+
+function renderProgressDots() {
+    const host = document.getElementById("progressDots");
+    host.innerHTML = "";
+    questions.forEach((q, idx) => {
+        const dot = document.createElement("div");
+        dot.className = "p-dot";
+        if (idx === currentQuestion) dot.classList.add("active");
+        if (answered[idx]) {
+            dot.classList.add(userAnswers[idx] === q.answer ? "right" : "wrong");
+        }
+        host.appendChild(dot);
+    });
+}
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    document.getElementById("hudQNumber").textContent = `${currentQuestion + 1} / ${questions.length}`;
+    document.getElementById("hudTopic").textContent = q.topic;
+    document.getElementById("questionText").textContent = q.question;
+
+    const container = document.getElementById("choicesContainer");
+    container.innerHTML = "";
+    const fb = document.getElementById("feedbackBox");
+    fb.className = "arena-feedback";
+
+    q.choices.forEach((choice, idx) => {
+        const btn = document.createElement("button");
+        btn.className = `s-tile s-tile-${idx}`;
+        btn.innerHTML = `
+            <span class="s-shape">${shapes[idx]}</span>
+            <span class="s-text">${choice}</span>
+            <span class="s-status-icon"></span>
+            <span class="s-key">${String.fromCharCode(65 + idx)}</span>
+        `;
+        btn.addEventListener("click", () => selectAnswer(idx));
+        container.appendChild(btn);
+    });
+
+    if (answered[currentQuestion]) {
+        stopTimer();
+        restoreAnsweredState();
+    } else {
+        startTimer();
+    }
+
+    document.getElementById("previousBtn").disabled = currentQuestion === 0;
+    document.getElementById("nextBtn").disabled = !answered[currentQuestion];
+    const isLast = currentQuestion === questions.length - 1;
+    document.getElementById("nextBtn").textContent = isLast ? "FINISH & PODIUM ♛" : "NEXT →";
+    document.getElementById("bannerNextBtn").textContent = isLast ? "VIEW PODIUM ♛" : "NEXT QUESTION →";
+
+    renderProgressDots();
+}
+
+function selectAnswer(index) {
+    if (answered[currentQuestion]) return;
+    stopTimer();
+
+    const q = questions[currentQuestion];
+    userAnswers[currentQuestion] = index;
+    answered[currentQuestion] = true;
+
+    const isCorrect = index === q.answer;
+    if (isCorrect) {
+        streak++;
+        if (streak > bestStreak) bestStreak = streak;
+        const speedBonus = Math.round((timeLeft / QUESTION_TIME) * 400);
+        const streakBonus = streak >= 2 ? Math.min(streak * 50, 250) : 0;
+        const earned = 600 + speedBonus + streakBonus;
+        totalPoints += earned;
+        sfxCorrect();
+        spawnPointsPopup(earned);
+    } else {
+        streak = 0;
+        sfxWrong();
+    }
+
+    advanceBotsForQuestion(currentQuestion);
+    updateHudStats();
+
+    const tiles = document.querySelectorAll(".s-tile");
+    tiles.forEach((tile, i) => {
+        tile.disabled = true;
+        const icon = tile.querySelector(".s-status-icon");
+        if (i === q.answer) {
+            tile.classList.add("is-correct");
+            icon.textContent = "✓";
+        } else if (i === index && !isCorrect) {
+            tile.classList.add("is-wrong");
+            icon.textContent = "✕";
+        } else {
+            tile.classList.add("dimmed");
+        }
+    });
+
+    const fb = document.getElementById("feedbackBox");
+    if (isCorrect) {
+        fb.className = "arena-feedback show good";
+        document.getElementById("feedbackTitle").textContent =
+            streak >= 3 ? `✦ ${streak}x Streak! Brilliant!` : "✓ Correct Answer!";
+    } else {
+        fb.className = "arena-feedback show bad";
+        document.getElementById("feedbackTitle").textContent = "✕ Not Quite!";
+    }
+    document.getElementById("feedbackText").textContent = q.explanation;
+
+    document.getElementById("nextBtn").disabled = false;
+    renderProgressDots();
+}
+
+function restoreAnsweredState() {
+    const q = questions[currentQuestion];
+    const selected = userAnswers[currentQuestion];
+    const tiles = document.querySelectorAll(".s-tile");
+
+    tiles.forEach((tile, i) => {
+        tile.disabled = true;
+        const icon = tile.querySelector(".s-status-icon");
+        if (i === q.answer) {
+            tile.classList.add("is-correct");
+            icon.textContent = "✓";
+        } else if (i === selected) {
+            tile.classList.add("is-wrong");
+            icon.textContent = "✕";
+        } else {
+            tile.classList.add("dimmed");
+        }
+    });
+
+    const fb = document.getElementById("feedbackBox");
+    if (selected === q.answer) {
+        fb.className = "arena-feedback show good";
+        document.getElementById("feedbackTitle").textContent = "✓ Correct Answer!";
+    } else {
+        fb.className = "arena-feedback show bad";
+        document.getElementById("feedbackTitle").textContent =
+            selected === -1 ? "⏰ Time's Up!" : "✕ Incorrect Answer";
+    }
+    document.getElementById("feedbackText").textContent = q.explanation;
+}
+
+function nextQuestion() {
+    if (!answered[currentQuestion]) return;
+    sfxClick();
+    if (currentQuestion === questions.length - 1) {
+        finishQuiz();
+        return;
+    }
+    currentQuestion++;
+    displayQuestion();
+}
+
+function previousQuestion() {
+    if (currentQuestion === 0) return;
+    sfxClick();
+    stopTimer();
+    currentQuestion--;
+    displayQuestion();
+}
+
+/* =========================================
+   RESULTS & SPECTRUM CONFETTI
+========================================= */
+function getWrongQuestions() {
+    return questions
+        .map((q, index) => ({ ...q, originalIndex: index }))
+        .filter(q => userAnswers[q.originalIndex] !== q.answer);
+}
+
+function finishQuiz() {
+    stopTimer();
+    const correct = questions.filter((q, idx) => userAnswers[idx] === q.answer).length;
+    const wrong = questions.length - correct;
+    const pct = Math.round((correct / questions.length) * 100);
+
+    document.getElementById("finalPoints").textContent = totalPoints.toLocaleString();
+    document.getElementById("finalScore").textContent = `${correct}/${questions.length}`;
+    document.getElementById("percentage").textContent = `${pct}%`;
+    document.getElementById("bestStreakStat").textContent = `${bestStreak}✦`;
+
+    const title = document.getElementById("resultTitle");
+    const msg = document.getElementById("resultMessage");
+    const icon = document.getElementById("podiumIcon");
+
+    if (pct === 100) {
+        icon.textContent = "♛";
+        title.textContent = `Unstoppable, ${playerNickname}!`;
+        msg.textContent = "20 out of 20! Flawless speed and accuracy across every Creative Technology topic.";
+        launchConfetti();
+        sfxFanfare();
+    } else if (pct >= 80) {
+        icon.textContent = "★";
+        title.textContent = `Podium Finish, ${playerNickname}!`;
+        msg.textContent = "Great live round! Open Fullscreen Study Mode to master the concepts you missed.";
+        launchConfetti();
+        sfxFanfare();
+    } else if (pct >= 60) {
+        icon.textContent = "✦";
+        title.textContent = `Strong Momentum, ${playerNickname}!`;
+        msg.textContent = "Solid effort! Use the interactive fullscreen study deck below to level up.";
+        sfxCorrect();
+    } else {
+        icon.textContent = "☾";
+        title.textContent = `Keep Climbing, ${playerNickname}!`;
+        msg.textContent = "Step into Fullscreen Study Mode below to review each missed concept interactively.";
+    }
+
+    renderTopicBreakdown();
+    renderMissedReview();
+
+    const studyBtn = document.getElementById("studyButton");
+    studyBtn.disabled = wrong === 0;
+    studyBtn.textContent = wrong === 0
+        ? "✓ ALL 20 MASTERED — ZERO MISTAKES"
+        : `⛶ STUDY ${wrong} MISSED ${wrong === 1 ? "CONCEPT" : "CONCEPTS"} IN FULLSCREEN`;
+
+    showScreen("resultsScreen");
+}
+
+function renderTopicBreakdown() {
+    const host = document.getElementById("topicBreakdown");
+    host.innerHTML = "";
+    topicNames.forEach(topic => {
+        const items = questions.map((q, i) => ({ ...q, i })).filter(q => q.topic === topic);
+        const hits = items.filter(q => userAnswers[q.i] === q.answer).length;
+        const pct = Math.round((hits / items.length) * 100);
+
+        const box = document.createElement("div");
+        box.className = "t-bar-box";
+        box.innerHTML = `
+            <div class="t-bar-top">
+                <span>${topic}</span>
+                <span>${hits}/${items.length} (${pct}%)</span>
+            </div>
+            <div class="t-bar-track">
+                <div class="t-bar-fill" style="width:${pct}%"></div>
+            </div>
+        `;
+        host.appendChild(box);
+    });
+}
+
+function renderMissedReview() {
+    const host = document.getElementById("reviewContainer");
+    host.innerHTML = "";
+    const wrongList = getWrongQuestions();
+
+    if (wrongList.length === 0) {
+        host.innerHTML = `
+            <div style="text-align:center; padding:26px 10px;">
+                <div style="font-size:42px; margin-bottom:8px;">✦</div>
+                <strong style="font-family:'Poppins',sans-serif; font-size:17px;">
+                    Clean Sweep! Zero Mistakes!
+                </strong>
+                <p style="color:var(--muted); font-size:13px; margin-top:4px;">
+                    You answered all 20 questions accurately.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    wrongList.forEach(q => {
+        const ansIdx = userAnswers[q.originalIndex];
+        const yourText = (ansIdx === null || ansIdx === -1) ? "Timed Out / Unanswered" : q.choices[ansIdx];
+
+        const div = document.createElement("div");
+        div.className = "missed-item";
+        div.innerHTML = `
+            <span class="missed-tag">${q.topic} · Q${String(q.originalIndex + 1).padStart(2, "0")}</span>
+            <div class="missed-q">${q.question}</div>
+            <div class="missed-ans bad">✕ Your Answer: ${yourText}</div>
+            <div class="missed-ans good">✓ Correct Answer: ${q.choices[q.answer]}</div>
+        `;
+        host.appendChild(div);
+    });
+}
+
+/* =========================================
+   FULLSCREEN INTERACTIVE STUDY SESSION
+========================================= */
+function openStudyGuide() {
+    missedList = getWrongQuestions();
+    if (missedList.length === 0) return;
+
+    sfxClick();
+    currentStudyIdx = 0;
+    showScreen("studyScreen");
+    requestBrowserFullscreen();
+    renderStudyCard();
+}
+
+function requestBrowserFullscreen() {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+    }
+}
+
+function toggleBrowserFullscreen() {
+    if (!document.fullscreenElement) {
+        requestBrowserFullscreen();
+    } else if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+    }
+}
+
+document.addEventListener("fullscreenchange", () => {
+    const btn = document.getElementById("fullscreenToggleBtn");
+    if (btn) {
+        btn.textContent = document.fullscreenElement ? "🗗 Exit Fullscreen" : "⛶ Fullscreen";
+    }
+});
+
+function exitStudySession() {
+    sfxClick();
+    if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+    }
+    showScreen("resultsScreen");
+}
+
+function renderStudyDots() {
+    const host = document.getElementById("fsDotsContainer");
+    host.innerHTML = "";
+    missedList.forEach((item, idx) => {
+        const dot = document.createElement("button");
+        dot.className = "fs-dot";
+        if (idx === currentStudyIdx) dot.classList.add("active");
+        if (masteredLessons.has(item.originalIndex)) dot.classList.add("mastered");
+        dot.addEventListener("click", () => {
+            currentStudyIdx = idx;
+            renderStudyCard();
+        });
+        host.appendChild(dot);
+    });
+}
+
+function updateStudyProgressUI() {
+    const total = missedList.length;
+    const done = masteredLessons.size;
+    const pct = total === 0 ? 100 : Math.round((done / total) * 100);
+
+    document.getElementById("studyProgressPercent").textContent = `${pct}%`;
+    document.getElementById("studyProgressBar").style.width = `${pct}%`;
+    document.getElementById("studyProgressText").textContent = `${done} of ${total} mastered`;
+}
+
+function renderStudyCard() {
+    updateStudyProgressUI();
+    renderStudyDots();
+
+    const footer = document.getElementById("fsFooterNav");
+    const host = document.getElementById("fsCardHost");
+
+    if (currentStudyIdx >= missedList.length) {
+        document.getElementById("fsLessonCounter").textContent = "Session Complete!";
+        footer.style.display = "none";
+        launchConfetti();
+        sfxFanfare();
+        host.innerHTML = `
+            <div class="study-deck-card" style="text-align:center; padding:46px 28px;">
+                <div style="font-size:56px; margin-bottom:12px;">♛</div>
+                <h2 class="deck-title">All ${missedList.length} Concepts Reviewed!</h2>
+                <p style="color:var(--muted); font-size:14.5px; max-width:460px; margin:0 auto 26px; line-height:1.7;">
+                    You've unlocked and practiced every concept you missed. Jump back into the live arena and aim for 20/20!
+                </p>
+                <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                    <button class="btn-spec btn-spec-secondary" onclick="currentStudyIdx = 0; renderStudyCard();">
+                        ↻ REVIEW DECK AGAIN
+                    </button>
+                    <button class="btn-spec btn-spec-primary" onclick="exitStudySession(); retakeQuiz();">
+                        ✦ PLAY LIVE QUIZ AGAIN
+                    </button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    footer.style.display = "flex";
+    const q = missedList[currentStudyIdx];
+    const isUnlocked = unlockedCards.has(q.originalIndex);
+    const isMastered = masteredLessons.has(q.originalIndex);
+
+    document.getElementById("fsLessonCounter").textContent =
+        `Card ${currentStudyIdx + 1} of ${missedList.length} · ${q.topic}`;
+
+    const distractors = q.choices
+        .map((_, i) => i)
+        .filter(i => i !== q.answer)
+        .slice(0, 2);
+    const miniOpts = [q.answer, ...distractors].sort((a, b) => a - b);
+    const passedMini = miniQuizAnswered.has(q.originalIndex);
+
+    const miniButtonsHTML = miniOpts.map(cIdx => {
+        const cls = (passedMini && cIdx === q.answer) ? "correct" : "";
+        return `
+            <button class="mini-choice-btn ${cls}"
+                ${passedMini ? "disabled" : ""}
+                onclick="checkMiniRecall(${q.originalIndex}, ${cIdx}, this)">
+                ${q.choices[cIdx]}
+            </button>
+        `;
+    }).join("");
+
+    host.innerHTML = `
+        <div class="study-deck-card">
+            <div class="deck-header">
+                <span class="deck-topic-pill">${q.topic.toUpperCase()} · Q${String(q.originalIndex + 1).padStart(2, "0")}</span>
+                <span class="deck-status-pill ${isMastered ? "done" : ""}" id="deckStatusPill">
+                    ${isMastered ? "✓ MASTERED" : "NEEDS PRACTICE"}
+                </span>
+            </div>
+
+            <h2 class="deck-title">${q.lessonTitle}</h2>
+
+            <div class="deck-missed-prompt">
+                <span>QUESTION YOU MISSED</span>
+                <p>${q.question}</p>
+            </div>
+
+            ${!isUnlocked ? `
+                <div class="flip-trigger-box" onclick="unlockStudyCard(${q.originalIndex})">
+                    <strong>✦ Tap to Flip & Reveal Concept Breakdown</strong>
+                    <span>Try recalling the right answer first, then click or press Space</span>
+                </div>
+            ` : ""}
+
+            <div class="deck-revealed ${isUnlocked ? "show" : ""}">
+                <p class="deck-explanation">${q.deepDive}</p>
+
+                <div class="deck-answer-callout">
+                    <span>✓ KEY ANSWER TO REMEMBER</span>
+                    <strong>${q.choices[q.answer]}</strong>
+                </div>
+
+                <div class="mini-practice-box">
+                    <div class="mini-practice-label">
+                        ★ QUICK RECALL CHECK — TAP THE RIGHT ANSWER TO MASTER THIS CARD:
+                    </div>
+                    <div class="mini-choices">
+                        ${miniButtonsHTML}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("fsPrevBtn").disabled = currentStudyIdx === 0;
+    document.getElementById("fsNextBtn").textContent =
+        currentStudyIdx === missedList.length - 1 ? "FINISH SESSION ✓" : "NEXT CARD →";
+}
+
+function unlockStudyCard(originalIndex) {
+    sfxClick();
+    unlockedCards.add(originalIndex);
+    renderStudyCard();
+}
+
+function checkMiniRecall(originalIndex, chosenIndex, btnEl) {
+    const q = questions[originalIndex];
+    if (chosenIndex === q.answer) {
+        sfxCorrect();
+        btnEl.classList.add("correct");
+        miniQuizAnswered.add(originalIndex);
+        masteredLessons.add(originalIndex);
+        document.querySelectorAll(".mini-choice-btn").forEach(b => b.disabled = true);
+
+        const pill = document.getElementById("deckStatusPill");
+        if (pill) {
+            pill.textContent = "✓ MASTERED";
+            pill.classList.add("done");
+        }
+        updateStudyProgressUI();
+        renderStudyDots();
+    } else {
+        sfxWrong();
+        btnEl.classList.add("wrong");
+        btnEl.disabled = true;
+    }
+}
+
+function prevStudyCard() {
+    if (currentStudyIdx > 0) {
+        sfxClick();
+        currentStudyIdx--;
+        renderStudyCard();
+    }
+}
+
+function nextStudyCard() {
+    if (currentStudyIdx < missedList.length) {
+        sfxClick();
+        currentStudyIdx++;
+        renderStudyCard();
+    }
+}
+
+/* =========================================
+   KEYBOARD CONTROLS & CONFETTI
+========================================= */
+document.addEventListener("keydown", (e) => {
+    const quizOn = document.getElementById("quizScreen").classList.contains("active");
+    const studyOn = document.getElementById("studyScreen").classList.contains("active");
+
+    if (quizOn) {
+        const map = { "1": 0, "a": 0, "A": 0, "2": 1, "b": 1, "B": 1, "3": 2, "c": 2, "C": 2, "4": 3, "d": 3, "D": 3 };
+        if (e.key in map && !answered[currentQuestion]) {
+            selectAnswer(map[e.key]);
+        } else if (e.key === "Enter" && answered[currentQuestion]) {
+            nextQuestion();
+        }
+    } else if (studyOn) {
+        if (e.key === " " && currentStudyIdx < missedList.length) {
+            const q = missedList[currentStudyIdx];
+            if (!unlockedCards.has(q.originalIndex)) {
+                e.preventDefault();
+                unlockStudyCard(q.originalIndex);
+            }
+        } else if (e.key === "ArrowRight") {
+            nextStudyCard();
+        } else if (e.key === "ArrowLeft") {
+            prevStudyCard();
+        }
+    }
+});
+
+function launchConfetti() {
+    const canvas = document.getElementById("confettiCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ["#f03e2f", "#cb3b62", "#933f8c", "#5944ad", "#2247cb", "#1449dc"];
+    const pieces = Array.from({ length: 90 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height,
+        w: 8 + Math.random() * 6,
+        h: 10 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vy: 3 + Math.random() * 4,
+        vx: (Math.random() - 0.5) * 3,
+        rot: Math.random() * 360
+    }));
+
+    let frame = 0;
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rot += 4;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate((p.rot * Math.PI) / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+        });
+        frame++;
+        if (frame < 140) requestAnimationFrame(draw);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    draw();
+}
+
+function retakeQuiz() {
+    startQuiz();
+}
+
+// Initialize QR & Lobby on Load
+renderLiveQR();
+renderLobbyPlayers();
+</script>
+</body>
+</html>
